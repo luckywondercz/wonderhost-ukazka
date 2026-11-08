@@ -1,69 +1,58 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import { connection } from "next/server";
+
 import styles from "./page.module.css";
 
-export default function Home() {
+// Údaje z doby běhu: proměnná prostředí a čas odpovědi serveru.
+// connection() zajistí, že se čtou při každém požadavku, ne při buildu.
+async function Runtime() {
+  await connection();
+  const message = process.env.UKAZKA_ZPRAVA;
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <div className={styles.row}>
+        <dt>Zpráva z proměnné prostředí</dt>
+        <dd>{message ? message : <span className={styles.muted}>UKAZKA_ZPRAVA není nastavená</span>}</dd>
+      </div>
+      <div className={styles.row}>
+        <dt>Odpověď serveru</dt>
+        <dd>
+          {new Date().toLocaleString("cs-CZ", { timeZone: "Europe/Prague" })}
+        </dd>
+      </div>
+    </>
+  );
+}
+
+export default function Home() {
+  const built = new Date(process.env.BUILD_TIME ?? 0);
+  return (
+    <main className={styles.page}>
+      <h1>Ukázková aplikace</h1>
+      <p className={styles.lead}>
+        Tahle stránka slouží k vyzkoušení nasazení z Gitu na WonderHost: nová verze, návrat zpět
+        a proměnné prostředí.
+      </p>
+      <dl className={styles.facts}>
+        <div className={styles.row}>
+          <dt>Verze</dt>
+          <dd>{process.env.APP_VERSION}</dd>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className={styles.row}>
+          <dt>Sestaveno</dt>
+          <dd>{built.toLocaleString("cs-CZ", { timeZone: "Europe/Prague" })}</dd>
         </div>
-      </main>
-    </div>
+        <Suspense
+          fallback={
+            <div className={styles.row}>
+              <dt>Údaje ze serveru</dt>
+              <dd className={styles.muted}>načítám…</dd>
+            </div>
+          }
+        >
+          <Runtime />
+        </Suspense>
+      </dl>
+    </main>
   );
 }
